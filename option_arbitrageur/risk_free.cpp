@@ -8,8 +8,8 @@ static inline int getVol(int liquidity)
     return liquidity / 2;
 }
 
-RiskFree::RiskFree(double threshold, DepthMarketCollection *pDMC) :
-    BaseStrategy(pDMC),
+RiskFree::RiskFree(double threshold, DepthMarketCollection *pDMC, QObject *parent) :
+    BaseStrategy(pDMC, parent),
     threshold(threshold)
 {
     //
@@ -17,7 +17,7 @@ RiskFree::RiskFree(double threshold, DepthMarketCollection *pDMC) :
 
 RiskFree::~RiskFree()
 {
-    //
+    qDebug() << "~RiskFree()";
 }
 
 void RiskFree::onUnderlyingChanged(int underlyingIdx)

@@ -5,14 +5,16 @@
 
 class RiskFree : public BaseStrategy
 {
+    Q_OBJECT
+
+    const double threshold;
+
 public:
-    RiskFree(double threshold, DepthMarketCollection *pDMC);
+    RiskFree(double threshold, DepthMarketCollection *pDMC, QObject *parent = nullptr);
     ~RiskFree();
 
     void onUnderlyingChanged(int underlyingIdx);
     void onOptionChanged(int underlyingIdx, OPTION_TYPE type, int kIdx);
-
-    const double threshold;
 
 protected:
    // Argitrage strategies

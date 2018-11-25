@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <QByteArray>
-#include <QString>
 #include <QDateTime>
 #include <QCoreApplication>
 
@@ -29,7 +28,7 @@ static void messageOut(QtMsgType type, const QMessageLogContext &context, const 
     }
 }
 
-void toStdOut(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+static void toStdOut(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     QByteArray localMsg = (QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd hh:mm:ss.zzz ")) + msg).toLocal8Bit();
     messageOut(type, context, localMsg, stdout);
@@ -38,7 +37,7 @@ void toStdOut(QtMsgType type, const QMessageLogContext &context, const QString &
     }
 }
 
-void toStdOutAndFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+static void toStdOutAndFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     QByteArray localMsg = (QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd hh:mm:ss.zzz ")) + msg).toLocal8Bit();
     messageOut(type, context, localMsg, stdout);
@@ -49,7 +48,7 @@ void toStdOutAndFile(QtMsgType type, const QMessageLogContext &context, const QS
     }
 }
 
-void toFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+static void toFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     QByteArray localMsg = (QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd hh:mm:ss.zzz ")) + msg).toLocal8Bit();
     messageOut(type, context, localMsg, pLogFile);

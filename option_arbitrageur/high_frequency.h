@@ -7,10 +7,12 @@ class OptionPricing;
 
 class HighFrequency : public BaseStrategy
 {
+    Q_OBJECT
+
     const OptionPricing *pPricingEngine;
 
 public:
-    HighFrequency(OptionPricing *pPricing, DepthMarketCollection *pDMC);
+    HighFrequency(OptionPricing *pPricing, DepthMarketCollection *pDMC, QObject *parent = nullptr);
     ~HighFrequency();
 
     void onUnderlyingChanged(int underlyingIdx);
