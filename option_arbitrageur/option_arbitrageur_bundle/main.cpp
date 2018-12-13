@@ -7,6 +7,8 @@
 #include "multiple_timer.h"
 #include "message_handler.h"
 #include "option_helper.h"
+#include "market_watcher.h"
+#include "ctp_executer.h"
 #include "option_arbitrageur.h"
 
 int main(int argc, char *argv[])
@@ -44,8 +46,8 @@ int main(int argc, char *argv[])
     bool log2File = parser.isSet("logtofile");
     setupMessageHandler(true, log2File, "option_arbitrageur");
 
-    com::lazzyquant::market_watcher *pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
-    com::lazzyquant::trade_executer *pExecuter = nullptr;
+    MarketWatcher *pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
+    CtpExecuter *pExecuter = nullptr;
     if (!replayMode) {
         pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
     }
