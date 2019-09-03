@@ -1,4 +1,5 @@
-# LazzyQuant 期货/期权量化交易系统
+# LazzyQuant
+### Quantative trading platform for geeks.
 
 ## 主要功能:
 1. 接收市场行情数据, 生成K线数据并保存至数据库  
@@ -18,5 +19,18 @@
 &emsp;&emsp;Boost 1.68  
 &emsp;&emsp;D-Bus 1.10.28  
 &emsp;&emsp;MySQL 5.7.26  
+
+## 在Linux下编译的步骤
+git clone https://github.com/zc8424/LazzyQuant.git  
+cd LazzyQuant  
+qmake  
+make -j4  
+
+&emsp;注:  
+
+1. 编译时找不到 boost 库的头文件可通过以下命令安装  
+RedHat/CentOS: sudo yum install boost  
+Debian/Ubuntu: sudo apt-get install libboost-dev  
+2. Linux发行版自带的Qt版本如果太低(<5.10)，可安装Qt官网上的最新版本  
 
 #### 部分开发文档存放在LazzyDocument仓库中  
