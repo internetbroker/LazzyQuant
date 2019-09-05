@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QStringList>
-#include <QSet>
 
 class OptionHelper;
 class OptionPricing;

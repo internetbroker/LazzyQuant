@@ -6,7 +6,6 @@
 #include "message_handler.h"
 #include "option_arbitrageur_options.h"
 #include "option_arbitrageur_dbus.h"
-#include "option_arbitrageur.h"
 
 int main(int argc, char *argv[])
 {

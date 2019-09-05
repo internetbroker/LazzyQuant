@@ -33,14 +33,14 @@ QuantTraderDbus::QuantTraderDbus(const QuantTraderOptions &options)
 
     if (options.replayMode) {
         auto pReplayer = new tick_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
-        auto managerReplay = new ReplayManager<tick_replayer, QuantTrader, trade_executer>(pReplayer, pTrader, nullptr);
+        auto managerReplay = new ReplayManager<tick_replayer, QuantTrader, trade_executer>(pReplayer, pTrader, pExecuter);
         if (options.isReplayReady()) {
             managerReplay->setAutoReplayDate(options.replayStartDate, options.replayStopDate);
         }
         pManager = managerReplay;
     } else {
         auto pWatcher = new market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
-        pManager = new QuantTraderRealManager<market_watcher, QuantTrader, trade_executer>(pWatcher, pTrader, nullptr);
+        pManager = new QuantTraderRealManager<market_watcher, QuantTrader, trade_executer>(pWatcher, pTrader, pExecuter);
     }
 
     pManager->init();

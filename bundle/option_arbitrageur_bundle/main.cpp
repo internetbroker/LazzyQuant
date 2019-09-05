@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
+#include <QDebug>
 
 #include "config.h"
 #include "market.h"
