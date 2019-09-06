@@ -76,8 +76,8 @@ void TradeLogger::addRecord()
     qry.bindValue(4, name + "_actions");
     bool ok = qry.exec();
     if (!ok) {
-        qCritical().noquote() << "Insert record into" << tableOfDB << "failed!";
         qCritical().noquote() << qry.lastError();
+        qCritical().noquote() << "Insert record into" << tableOfDB << "failed!";
     }
 }
 
@@ -96,7 +96,7 @@ void TradeLogger::saveActionToDB(qint64 actionTime, const QString &instrumentID,
     qry.bindValue(6, 0);
     bool ok = qry.exec();
     if (!ok) {
-        qCritical().noquote() << "Insert action into" << tableOfDB << "failed!";
         qCritical().noquote() << qry.lastError();
+        qCritical().noquote() << "Insert action into" << tableOfDB << "failed!";
     }
 }

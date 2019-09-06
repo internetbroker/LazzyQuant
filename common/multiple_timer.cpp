@@ -50,5 +50,6 @@ void MultipleTimer::stop()
 {
     if (timerId != 0) {
         killTimer(timerId);
+        timerId = 0;
     }
 }

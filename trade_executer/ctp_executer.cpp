@@ -123,7 +123,7 @@ CtpExecuter::~CtpExecuter()
 
 void CtpExecuter::customEvent(QEvent *event)
 {
-    qDebug() << "customEvent:" << int(event->type());
+    qDebug() << "TradeExecuter event:" << int(event->type());
     switch (int(event->type())) {
     case ERROR_ID_MSG:
     {
@@ -2111,7 +2111,7 @@ void CtpExecuter::cancelOrder(const QString &instrument, qulonglong orderRefID, 
  */
 void CtpExecuter::cancelAllOrders(const QString &instrument)
 {
-    qInfo() << __FUNCTION__ << instrument;
+    qInfo().noquote() << __FUNCTION__ << instrument;
     CHECK_LOGIN_STATE()
     CHECK_USER_CACHE_READY()
 
@@ -2273,7 +2273,7 @@ void CtpExecuter::deleteParkedOrderCancel(qulonglong id)
  */
 void CtpExecuter::setPosition(const QString &instrument, int newPosition)
 {
-    qInfo() << __FUNCTION__ << instrument << ", newPosition =" << newPosition;
+    qInfo().noquote() << __FUNCTION__ << QString("%1 = %2").arg(instrument).arg(newPosition);
     CHECK_LOGIN_STATE()
     CHECK_USER_CACHE_READY()
     CHECK_MARKET_CACHE_READY()
@@ -2300,7 +2300,7 @@ void CtpExecuter::setPosition(const QString &instrument, int newPosition)
  */
 int CtpExecuter::getPosition(const QString &instrument) const
 {
-    qInfo() << __FUNCTION__ << instrument;
+    qInfo().noquote() << __FUNCTION__ << instrument;
     CHECK_USER_CACHE_READY_RET(-INT_MAX)
 
     qDebug() << "ydLongPositions =" << ydLongPositions.value(instrument);

@@ -145,7 +145,7 @@ void BarCollector::saveEmitReset(int timeFrame, Bar &bar)
             saveBar(timeFrame, bar);
         }
         emit collectedBar(instrument, timeFrame, bar);
-        qInfo().noquote() << instrument << ":" << bar;
+        qInfo().noquote() << instrument << bar;
         bar.reset();
     }
 }
@@ -168,8 +168,8 @@ void BarCollector::saveBar(int timeFrame, const Bar &bar)
     qry.bindValue(7, 1);
     bool ok = qry.exec();
     if (!ok) {
-        qCritical().noquote() << "Insert bar into" << tableOfDB << "failed!";
         qCritical().noquote() << qry.lastError();
+        qCritical().noquote() << "Insert bar into" << tableOfDB << "failed!";
     }
 }
 
