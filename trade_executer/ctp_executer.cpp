@@ -1567,8 +1567,6 @@ void CtpExecuter::updateAccountInfo()
  * \brief CtpExecuter::updateInstrumentDataCache
  * 请求查询合约基本信息和当前市价信息.
  * 返回结果将被存入缓存, 供盘中快速查询.
- *
- * \param instruments 合约代码列表.
  */
 void CtpExecuter::updateInstrumentDataCache()
 {

@@ -5,6 +5,9 @@
 
 class DepthMarket;
 
+/*!
+ * \brief 蝶式价差套利.
+ */
 class Butterfly : public BaseStrategy
 {
 public:
@@ -14,9 +17,9 @@ public:
     void onInstrumentChanged(int idx);
 
 protected:
-    int firstIdx;
-    int secondIdx;
-    int thirdIdx;
+    int firstIdx;       //!< 近月合约索引.
+    int secondIdx;      //!< 中间月份合约索引.
+    int thirdIdx;       //!< 远月合约索引.
 
     int maxPosition;
     int minPosition;
@@ -28,8 +31,8 @@ protected:
     DepthMarket *second;
     DepthMarket *third;
 
-    void check010();
-    void check101();
+    void check010();    //!< 中间月份合约价格的两倍大于相邻近月合约价格与相邻远月合约价格之和.
+    void check101();    //!< 中间月份合约价格的两倍小于相邻近月合约价格与相邻远月合约价格之和.
 };
 
 #endif // BUTTERFLY_H

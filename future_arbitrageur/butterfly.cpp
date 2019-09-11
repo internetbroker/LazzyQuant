@@ -33,14 +33,6 @@ void Butterfly::onInstrumentChanged(int idx)
     }
 }
 
-/*!
- * \brief Butterfly::check010
- * 中间月份合约价格的两倍大于相邻近月合约价格与相邻远月合约价格之和.
- *
- * \param firstIdx  近月合约索引.
- * \param secondIdx 中间月份合约索引.
- * \param thirdIdx  远月合约索引.
- */
 void Butterfly::check010()
 {
     const auto diff = second->bidPrice * 2.0 - first->askPrice - third->askPrice;
@@ -69,14 +61,6 @@ void Butterfly::check010()
     }
 }
 
-/*!
- * \brief Butterfly::check101
- * 中间月份合约价格的两倍小于相邻近月合约价格与相邻远月合约价格之和.
- *
- * \param firstIdx  近月合约索引.
- * \param secondIdx 中间月份合约索引.
- * \param thirdIdx  远月合约索引.
- */
 void Butterfly::check101()
 {
     const auto diff = first->bidPrice + third->bidPrice - second->askPrice * 2.0;
