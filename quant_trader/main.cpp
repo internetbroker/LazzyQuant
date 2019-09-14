@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(VERSION_STR);
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("Collect K lines, calculate indicators/strategies and call TradeExecuter automatically.");
+    parser.setApplicationDescription("Collect bars, calculate indicators/strategies and call TradeExecuter automatically.");
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOptions(quantTraderOptions);

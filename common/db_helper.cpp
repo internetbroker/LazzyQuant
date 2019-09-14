@@ -62,14 +62,15 @@ bool createTablesIfNotExist(const QString &dbName, const QStringList &tableNames
 {
     bool ret = true;
     QSqlDatabase sqlDB = QSqlDatabase::database();
-    QSqlQuery qry(sqlDB);
     QString oldDbName = sqlDB.databaseName();
-    if (oldDbName.toLower() != dbName.toLower()) {
+    bool isDifferentDbName = oldDbName.compare(dbName, Qt::CaseInsensitive);
+    if (isDifferentDbName) {
         sqlDB.close();
         sqlDB.setDatabaseName(dbName);
         sqlDB.open();
     }
     const auto existTables = sqlDB.tables();
+    QSqlQuery qry(sqlDB);
     for (const auto &tableToCreate : tableNames) {
         if (!existTables.contains(tableToCreate, Qt::CaseInsensitive)) {
             bool ok = qry.exec(QString("CREATE TABLE %1.%2 %3").arg(dbName, tableToCreate, format));
@@ -82,7 +83,7 @@ bool createTablesIfNotExist(const QString &dbName, const QStringList &tableNames
         }
     }
 
-    if (oldDbName.toLower() != dbName.toLower()) {
+    if (isDifferentDbName) {
         sqlDB.close();
         sqlDB.setDatabaseName(oldDbName);
         sqlDB.open();

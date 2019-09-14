@@ -7,8 +7,10 @@
 /*!
  * \brief 交易日历.
  */
-class TradingCalendar
+class TradingCalendar final
 {
+    QSet<QDate> nonTradingDays; // Mon ~ Fri but market close
+
     /*!
      * \brief 构造全局TradingCalendar对象, 并从配置文件中读取配置参数.
      */
@@ -62,9 +64,6 @@ public:
      * \return 交易日天数.
      */
     int getTradingDays(const QDate &startDate, const QDate &endDate) const;
-
-protected:
-    QSet<QDate> nonTradingDays; // Mon ~ Fri but market close
 
 };
 
