@@ -6,12 +6,6 @@
 #include <QSqlError>
 #include <QDebug>
 
-/*!
- * \brief checkAndReopenDbIfNotAlive
- * 检查数据库连接状态, 如果连接已经失效, 断开重连.
- *
- * \return 数据库连接状态, true正常, false不正常.
- */
 bool checkAndReopenDbIfNotAlive()
 {
     QSqlDatabase sqlDB = QSqlDatabase::database();

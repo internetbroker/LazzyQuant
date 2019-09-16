@@ -25,14 +25,12 @@ public:
 
     /*!
      * \brief 单例模式get接口.
-     *
      * \return 全局TradingCalendar对象的指针.
      */
     static TradingCalendar *getInstance();
 
     /*!
      * \brief 判断某一天是否是交易日.
-     *
      * \param date 交易日日期.
      * \return 是否是交易日.
      */
@@ -40,7 +38,6 @@ public:
 
     /*!
      * \brief 判断某一天是否有夜盘交易.
-     *
      * \param date 交易日日期.
      * \return 是否有夜盘交易.
      */
@@ -58,7 +55,6 @@ public:
 
     /*!
      * \brief 统计一段时期内的交易日天数.
-     *
      * \param startDate 起始日期(含).
      * \param endDate 结束日期(含).
      * \return 交易日天数.
