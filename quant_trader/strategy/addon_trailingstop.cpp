@@ -27,6 +27,13 @@ AddOnTrailingStop::AddOnTrailingStop(const QString &id, const QString &instrumen
     volIdx = 0;
 }
 
+AddOnTrailingStop::~AddOnTrailingStop()
+{
+    qDeleteAll(openSignals);
+    qDeleteAll(addonSignals);
+    qDeleteAll(takenSignals);
+}
+
 void AddOnTrailingStop::setParameter(double AFstep, double AFmax, int openVol, int addOn1Vol)
 {
     this->AFstep = AFstep;
@@ -172,9 +179,9 @@ void AddOnTrailingStop::onNewTick(qint64 time, double lastPrice)
         if (trigger != nullptr) {
             takenSignals.append(trigger);
         }
-        if (trigger2 != nullptr) {
-            takenSignals.append(trigger2);
-        }
+    }
+    if (trigger2 != nullptr) {
+        takenSignals.append(trigger2);
     }
     volIdx = targetVolIdx;
     position = addOnSequence[qAbs(volIdx)] * (volIdx > 0 ? 1 : -1);
