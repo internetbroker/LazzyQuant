@@ -54,7 +54,7 @@ public:
     Bar *getBarPtr(int timeFrame) {
         return &barMap[timeFrame];
     }
-    void setTradingDay(const QString &tradingDay);
+    void setTradingDay(const QString &tradingDay, const QDateTime &eraseFrom);
     bool onMarketData(qint64 currentTime, double lastPrice, int volume);
 
 protected:

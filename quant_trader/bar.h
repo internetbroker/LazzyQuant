@@ -33,6 +33,7 @@ public:
     qint64 volume;      // compatible with MT5
 
     Bar();
+    Bar(qint64 time);       //!< Make a stub bar with a timestamp.
     Bar(const KTExportBar &ktbar);
 
     void reset();

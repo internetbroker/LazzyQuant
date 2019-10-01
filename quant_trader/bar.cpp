@@ -11,6 +11,12 @@ Bar::Bar()
     reset();
 }
 
+Bar::Bar(qint64 time)
+{
+    reset();
+    this->time = time;
+}
+
 Bar::Bar(const KTExportBar &ktbar)
 {
     time = ktbar.m_time;
