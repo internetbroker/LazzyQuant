@@ -5,9 +5,8 @@
 
 #include <QMetaEnum>
 #include <QString>
-#include <QDateTime>
+#include <QTime>
 
-#define DATE_TIME (QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz")))
 #define INVALID_DATE_STRING QStringLiteral("00000000")
 
 #define TM1 \
@@ -15,20 +14,6 @@
 #define TM2 \
     qWarning() << _tempt.elapsed() << "ms";
 
-static inline bool isTimeCloseEnouogh(uint time1, uint time2, uint diff)
-{
-    // 两个无符号数不能用qAbs(time1 - time2) < diff;
-    if (time1 > time2) {
-        return (time1 - time2) < diff;
-    } else {
-        return (time2 - time1) < diff;
-    }
-}
-
-static inline bool isTimeCloseEnouogh(uint time1, uint time2, uint time3, uint diff)
-{
-    return isTimeCloseEnouogh(time1, time2, diff) && isTimeCloseEnouogh(time2, time3, diff) && isTimeCloseEnouogh(time1, time3, diff);
-}
 
 enum OPTION_TYPE {
     CALL_OPT,

@@ -1,4 +1,3 @@
-#include "common_utility.h"
 #include "depth_market.h"
 #include "pair_trade.h"
 
@@ -27,7 +26,7 @@ void PairTrade::onInstrumentChanged(int idx)
 {
     if (firstIdx == idx || secondIdx == idx) {
 
-        if (isTimeCloseEnouogh(first->time, second->time, 100)) {
+        if (qAbs(first->time - second->time) < 100) {
             qDebug() << first->lastPrice / second->lastPrice;
         }
 
