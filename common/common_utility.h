@@ -59,25 +59,6 @@ static inline int hhmmssToSec(const char *hhmmss)
     return hour * 3600 + minute * 60 + second;
 }
 
-template<class T>
-static inline bool isWithinRange(const T &t, const T &rangeStart, const T &rangeEnd)
-{
-    if (rangeStart < rangeEnd) {
-        return rangeStart <= t && t <= rangeEnd;
-    } else {
-        return rangeStart <= t || t <= rangeEnd;
-    }
-}
-
-template<class T>
-static inline bool isWithinRangeExcludeEnd(const T &t, const T &rangeStart, const T &rangeEnd)
-{
-    if (rangeStart < rangeEnd) {
-        return rangeStart <= t && t < rangeEnd;
-    } else {
-        return rangeStart <= t || t < rangeEnd;
-    }
-}
 
 // 三种类型的订单 (0:普通限价单, 1:Fill and Kill, 2:Fill or Kill)
 #define LIMIT_ORDER   0

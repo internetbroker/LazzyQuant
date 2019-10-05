@@ -5,7 +5,8 @@
 #include <QAtomicInt>
 #include <QStringList>
 #include <QSet>
-#include <QMap>
+#include <QHash>
+#include <QVector>
 #include <QTime>
 
 #include "time_mapper.h"
@@ -38,19 +39,18 @@ protected:
 
     bool loggedIn = false;
     QSet<QString> subscribeSet;
-    QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;   // 交易时间段总表.
-    QMap<QString, QPair<int, int>> currentTradingTimeMap;   // 当前, 或下一交易时段表.
+    QHash<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;  //!< 各合约交易时间段表.
+    QHash<QString, QVector<qint64>> mappedTimePointLists;       //!< 当前交易日, 各合约交易开始及结束时间点表.
 
     bool saveDepthMarketData;
     QString saveDepthMarketDataPath;
     QTime localTime;    // 用来在保存行情数据时生成一个本地的时间戳, 以记录行情到达的先后顺序.
-    QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
+    QHash<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
 
     MultipleTimer *multiTimer = nullptr;
     QList<QStringList> instrumentsToProcess;
     void setupTimers();
     void timesUp(int index);
-    void setCurrentTradingTime(const QString &instrumentID);
 
     QByteArray brokerID;
     QByteArray userID;
@@ -61,6 +61,7 @@ protected:
     void login();
     void subscribe();
     bool checkTradingTimes(const QString &instrumentID);
+    void mapTradingTimePoints();
     void processDepthMarketData(const CThostFtdcDepthMarketDataField &depthMarketDataField);
 
 signals:

@@ -2,6 +2,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#include <algorithm>
+#include <iterator>
 #include <QSettings>
 #include <QDebug>
 #include <QDir>
@@ -39,10 +41,8 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     subscribeSet = getSettingItemList(settings, "SubscribeList").toSet();
 
     for (const auto &instrumentID : qAsConst(subscribeSet)) {
-        if (checkTradingTimes(instrumentID)) {
-            setCurrentTradingTime(instrumentID);
-        } else {
-            qCritical() << instrumentID << "has no proper trading time!";
+        if (!checkTradingTimes(instrumentID)) {
+            qCritical().noquote() << instrumentID << "has no proper trading time!";
         }
     }
 
@@ -152,8 +152,6 @@ void MarketWatcher::timesUp(int index)
 
     for (const auto &instrumentID : qAsConst(subscribeSet)) {
         if (instrumentsToProcess[index].contains(instrumentID)) {
-            setCurrentTradingTime(instrumentID);
-
             if (saveDepthMarketData) {
                 auto &depthMarketDataList = depthMarketDataListMap[instrumentID];
                 if (!depthMarketDataList.empty()) {
@@ -168,36 +166,6 @@ void MarketWatcher::timesUp(int index)
                 }
             }
         }
-    }
-}
-
-void MarketWatcher::setCurrentTradingTime(const QString &instrumentID)
-{
-    const int len = tradingTimeMap[instrumentID].length();
-    QList<int> timeDiffs;
-    for (const auto & timePair : qAsConst(tradingTimeMap[instrumentID])) {
-        auto diff = QTime::currentTime().secsTo(timePair.second);
-        if (diff <= 0) {
-            diff += 86400;
-        }
-        timeDiffs.append(diff);
-    }
-
-    int min = INT_MAX;
-    int minIdx = -1;
-    for (int i = 0; i < len; i++) {
-        if (timeDiffs[i] < min) {
-            min = timeDiffs[i];
-            minIdx = i;
-        }
-    }
-
-    if (minIdx >= 0 && minIdx < len) {
-        currentTradingTimeMap[instrumentID].first = QTime(0, 0).secsTo(tradingTimeMap[instrumentID][minIdx].first);
-        currentTradingTimeMap[instrumentID].second = QTime(0, 0).secsTo(tradingTimeMap[instrumentID][minIdx].second);
-    } else {
-        qDebug() << "minIdx =" << minIdx;
-        qFatal("Should never see this!");
     }
 }
 
@@ -224,6 +192,7 @@ void MarketWatcher::customEvent(QEvent *event)
         if (currentTradingDay != tradingDay) {
             emit tradingDayChanged(tradingDay);
             mapTime.setTradingDay(tradingDay);
+            mapTradingTimePoints();
             currentTradingDay = tradingDay;
         }
     }
@@ -311,6 +280,22 @@ bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
     return false;
 }
 
+void MarketWatcher::mapTradingTimePoints()
+{
+    mappedTimePointLists.clear();
+    const auto keys = tradingTimeMap.keys();
+    for (const auto &key : keys) {
+        QVector<qint64> mappedTimePoints;
+        const auto tradingTimes = tradingTimeMap.value(key);
+        for (const auto &pair : tradingTimes) {
+            mappedTimePoints.append(mapTime(pair.first.msecsSinceStartOfDay() / 1000));
+            mappedTimePoints.append(mapTime(pair.second.msecsSinceStartOfDay() / 1000));
+        }
+        std::sort(mappedTimePoints.begin(), mappedTimePoints.end());
+        mappedTimePointLists.insert(key, mappedTimePoints);
+    }
+}
+
 /*!
  * \brief MarketWatcher::processDepthMarketData
  * 处理深度市场数据:
@@ -323,13 +308,27 @@ bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
 void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
 {
     const QString instrumentID(depthMarketDataField.InstrumentID);
-    int time = hhmmssToSec(depthMarketDataField.UpdateTime);
+    const auto mappedTimePoints = mappedTimePointLists.value(instrumentID);
+    qint64 mappedTime = 0;
+    if (!mappedTimePoints.empty()) {
+        int time = hhmmssToSec(depthMarketDataField.UpdateTime);
+        mappedTime = mapTime(time);
+        int idx = mappedTimePoints.indexOf(mappedTime);
+        if (idx >= 0) {
+            if (idx % 2 == 1) {
+                mappedTime --;
+            }
+        } else {
+            auto it = std::upper_bound(mappedTimePoints.cbegin(), mappedTimePoints.cend(), mappedTime);
+            if (std::distance(mappedTimePoints.cbegin(), it) % 2 == 0) {
+                mappedTime = 0;
+            }
+        }
+    }
 
-    const auto &tradetime = currentTradingTimeMap[instrumentID];
-    if (isWithinRange(time, tradetime.first, tradetime.second)) {
-        auto emitTime = mapTime((time == tradetime.second) ? (time == 0 ? 86399 : (time - 1)) : time);
+    if (mappedTime > 0) {
         emit newMarketData(instrumentID,
-                           emitTime,
+                           mappedTime,
                            depthMarketDataField.LastPrice,
                            depthMarketDataField.Volume,
                            depthMarketDataField.AskPrice1,
