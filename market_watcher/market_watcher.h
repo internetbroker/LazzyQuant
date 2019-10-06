@@ -2,7 +2,6 @@
 #define MARKET_WATCHER_H
 
 #include <QObject>
-#include <QAtomicInt>
 #include <QStringList>
 #include <QSet>
 #include <QHash>
@@ -33,7 +32,7 @@ protected:
     const QString name;
     QSettings *settings;
 
-    QAtomicInt nRequestID = 0;
+    int nRequestID = 0;
     CThostFtdcMdApi *pUserApi;
     CTickReceiver *pReceiver;
 

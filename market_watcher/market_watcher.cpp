@@ -223,7 +223,7 @@ void MarketWatcher::login()
     strcpy(reqUserLogin.UserID, userID);
     strcpy(reqUserLogin.Password, password);
 
-    pUserApi->ReqUserLogin(&reqUserLogin, nRequestID.fetchAndAddRelaxed(1));
+    pUserApi->ReqUserLogin(&reqUserLogin, nRequestID++);
 }
 
 /*!

@@ -2,7 +2,6 @@
 #define CTP_EXECUTER_H
 
 #include <QObject>
-#include <QAtomicInt>
 #include <QByteArray>
 #include <QMap>
 #include <QHash>
@@ -65,7 +64,7 @@ public:
     Q_ENUM(LoginState)
 
 protected:
-    QAtomicInt nRequestID = 0;
+    int nRequestID = 0;
     int queueTimerId;
     QQueue<AbstractQuery*> queuedQueries;
     CThostFtdcTraderApi *pUserApi;
