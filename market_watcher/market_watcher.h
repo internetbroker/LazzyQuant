@@ -60,7 +60,7 @@ protected:
 
     void login();
     void subscribe();
-    bool checkTradingTimes(const QString &instrumentID);
+    void setupTradingTimeRanges();
     void mapTradingTimePoints();
     void processDepthMarketData(const CThostFtdcDepthMarketDataField &depthMarketDataField);
 

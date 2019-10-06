@@ -16,6 +16,13 @@ struct Market {
 
 void loadCommonMarketData();
 Market loadMkt(const QString &file_name);
+
+/*!
+ * \brief 从各个交易市场里查找此合约的交易时间范围.
+ * \param instrumentID 合约代码.
+ * \return 交易时间范围.
+ */
+QList<QPair<QTime, QTime>> getTradingTimeRanges(const QString &instrumentID);
 QList<QTime> getEndPoints(const QString &instrumentID);
 
 #endif // MARKET_H

@@ -7,7 +7,7 @@
 #include "market.h"
 #include "common_utility.h"
 
-QList<Market> markets;
+static QList<Market> markets;
 
 void loadCommonMarketData()
 {
@@ -91,6 +91,26 @@ Market loadMkt(const QString &file_name)
     }
 
     return market;
+}
+
+QList<QPair<QTime, QTime>> getTradingTimeRanges(const QString &instrumentID)
+{
+    const QString code = getCode(instrumentID);
+    for (const auto &market : qAsConst(markets)) {
+        for (const auto &marketCode : qAsConst(market.codes)) {
+            if (code == marketCode) {
+                const int size = market.regexs.size();
+                int i = 0;
+                for (; i < size; i++) {
+                    if (QRegExp(market.regexs[i]).exactMatch(instrumentID)) {
+                        return market.tradetimeses[i];
+                    }
+                }
+                return {};   // instrumentID未能匹配任何正则表达式.
+            }
+        }
+    }
+    return {};
 }
 
 /*!

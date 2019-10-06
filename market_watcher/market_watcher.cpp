@@ -19,8 +19,6 @@
 #include "market_watcher.h"
 #include "tick_receiver.h"
 
-extern QList<Market> markets;
-
 MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     QObject(parent),
     name(config.name)
@@ -39,12 +37,7 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     }
 
     subscribeSet = getSettingItemList(settings, "SubscribeList").toSet();
-
-    for (const auto &instrumentID : qAsConst(subscribeSet)) {
-        if (!checkTradingTimes(instrumentID)) {
-            qCritical().noquote() << instrumentID << "has no proper trading time!";
-        }
-    }
+    setupTradingTimeRanges();
 
     settings->beginGroup("AccountInfo");
     brokerID = settings->value("BrokerID").toByteArray();
@@ -252,32 +245,17 @@ void MarketWatcher::subscribe()
     delete[] subscribe_array;
 }
 
-/*!
- * \brief MarketWatcher::checkTradingTimes
- * 查找各个交易市场, 找到相应合约的交易时间并事先储存到map里.
- *
- * \param instrumentID 合约代码.
- * \return 是否找到了该合约的交易时间.
- */
-bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
+void MarketWatcher::setupTradingTimeRanges()
 {
-    const QString code = getCode(instrumentID);
-    for (const auto &market : qAsConst(markets)) {
-        for (const auto &marketCode : qAsConst(market.codes)) {
-            if (code == marketCode) {
-                const int size = market.regexs.size();
-                int i = 0;
-                for (; i < size; i++) {
-                    if (QRegExp(market.regexs[i]).exactMatch(instrumentID)) {
-                        tradingTimeMap[instrumentID] = market.tradetimeses[i];
-                        return true;
-                    }
-                }
-                return false;   // instrumentID未能匹配任何正则表达式.
-            }
+    tradingTimeMap.clear();
+    for (const auto &instrumentID : qAsConst(subscribeSet)) {
+        auto tradingTimeRanges = getTradingTimeRanges(instrumentID);
+        if (tradingTimeRanges.empty()) {
+            qCritical().noquote() << instrumentID << "has no proper trading time!";
+        } else {
+            tradingTimeMap.insert(instrumentID, tradingTimeRanges);
         }
     }
-    return false;
 }
 
 void MarketWatcher::mapTradingTimePoints()
@@ -407,6 +385,10 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool up
         }
     }
 
+    setupTradingTimeRanges();
+    if (loggedIn) {
+        mapTradingTimePoints();
+    }
     setupTimers();
 
     if (updateIni) {
