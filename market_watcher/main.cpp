@@ -2,7 +2,6 @@
 #include <QCommandLineParser>
 
 #include "config.h"
-#include "market.h"
 #include "message_handler.h"
 #include "market_watcher.h"
 #include "market_watcher_adaptor.h"
@@ -26,8 +25,6 @@ int main(int argc, char *argv[])
     parser.process(a);
     bool log2File = parser.isSet("logtofile");
     setupMessageHandler(true, log2File, "market_watcher");
-
-    loadCommonMarketData();
 
     QList<MarketWatcher*> watcherList;
     for (const auto & config : watcherConfigs) {

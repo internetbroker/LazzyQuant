@@ -7,9 +7,7 @@
 #include "market.h"
 #include "common_utility.h"
 
-static QList<Market> markets;
-
-void loadCommonMarketData()
+KtMarket::KtMarket()
 {
     auto settings = getSettingsSmart(ORGANIZATION, "common");
 
@@ -23,7 +21,7 @@ void loadCommonMarketData()
     settings->endGroup();
 }
 
-Market loadMkt(const QString &file_name)
+Market KtMarket::loadMkt(const QString &file_name)
 {
     Market market;
     QDomDocument doc;
@@ -93,7 +91,13 @@ Market loadMkt(const QString &file_name)
     return market;
 }
 
-QList<QPair<QTime, QTime>> getTradingTimeRanges(const QString &instrumentID)
+KtMarket *KtMarket::getInstance()
+{
+    static KtMarket instance;
+    return &instance;
+}
+
+QList<QPair<QTime, QTime>> KtMarket::getTradingTimeRanges(const QString &instrumentID)
 {
     const QString code = getCode(instrumentID);
     for (const auto &market : qAsConst(markets)) {
@@ -113,14 +117,8 @@ QList<QPair<QTime, QTime>> getTradingTimeRanges(const QString &instrumentID)
     return {};
 }
 
-/*!
- * \brief getEndPoints
- * 查询并获取此合约的每个交易时段的结束时间点列表.
- *
- * \param instrumentID 合约代码.
- * \return 每个交易时段的结束时间点列表(未排序)
- */
-QList<QTime> getEndPoints(const QString &instrumentID) {
+QList<QTime> KtMarket::getEndPoints(const QString &instrumentID)
+{
     QString code = getCode(instrumentID);
     QList<QTime> endPoints;
     for (const auto &market : qAsConst(markets)) {
@@ -141,4 +139,14 @@ QList<QTime> getEndPoints(const QString &instrumentID) {
         }
     }
     return endPoints;
+}
+
+QList<QPair<QTime, QTime>> getTradingTimeRanges(const QString &instrumentID)
+{
+    return KtMarket::getInstance()->getTradingTimeRanges(instrumentID);
+}
+
+QList<QTime> getEndPoints(const QString &instrumentID)
+{
+    return KtMarket::getInstance()->getEndPoints(instrumentID);
 }

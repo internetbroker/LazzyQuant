@@ -3,7 +3,6 @@
 #include <QDebug>
 
 #include "config.h"
-#include "market.h"
 #include "message_handler.h"
 #include "parked_order.h"
 #include "option_arbitrageur_options.h"
@@ -16,7 +15,6 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("option_arbitrageur_bundle");
     QCoreApplication::setApplicationVersion(VERSION_STR);
 
-    loadCommonMarketData();
     qMetaTypeId<ParkedOrder>();
 
     QCommandLineParser parser;
