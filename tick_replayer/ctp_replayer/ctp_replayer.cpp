@@ -11,7 +11,7 @@
 #include "trading_calendar.h"
 #include "ctp_replayer.h"
 
-static QDataStream& operator>>(QDataStream& s, CThostFtdcDepthMarketDataField& dataField)
+static QDataStream& operator>>(QDataStream &s, CThostFtdcDepthMarketDataField &dataField)
 {
     s.readRawData((char*)&dataField, sizeof(CThostFtdcDepthMarketDataField));
     return s;
@@ -35,7 +35,6 @@ void CtpReplayer::appendTicksToList(const QString &date, const QString &instrume
         return;
     }
     QDate openDay = TradingCalendar::getInstance()->getOpenDay(tradingDay);
-    qDebug() << "OpenDay =" << openDay;
     auto openTime = QDateTime(openDay, ((openDay == tradingDay) ? QTime(9, 0) : QTime(21, 0)), QTimeZone::utc());
     auto closeTime = QDateTime(tradingDay, QTime(16, 0), QTimeZone::utc());
 
@@ -46,7 +45,7 @@ void CtpReplayer::appendTicksToList(const QString &date, const QString &instrume
             QString mdFileFullName = marketDataPath + instrument + "/" + tickFile;
             QFile mdFile(mdFileFullName);
             if (!mdFile.open(QFile::ReadOnly)) {
-                qCritical() << "Open file:" << mdFileFullName << "failed!";
+                qCritical().noquote() << "Open file:" << mdFileFullName << "failed!";
                 continue;
             }
             QDataStream mdStream(&mdFile);
@@ -54,7 +53,7 @@ void CtpReplayer::appendTicksToList(const QString &date, const QString &instrume
             QList<CThostFtdcDepthMarketDataField> tmpList;
             mdStream >> tmpList;
             if (tmpList.length() > 0) {
-                qDebug() << tmpList.size() << "in" << mdFileFullName;
+                qDebug().noquote() << tmpList.size() << "in" << mdFileFullName;
                 ctpMdList.append(tmpList);
             }
         }

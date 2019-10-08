@@ -3,7 +3,6 @@
 #include <QDir>
 #include <QDataStream>
 #include <QPair>
-#include <QTime>
 
 #include "config_struct.h"
 #include "common_utility.h"
@@ -70,8 +69,7 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
             int i = 0;
             int size = oneMinuteBars.size();
             for (; i < size; i++) {
-                QTime barTime = QTime(0, 0).addSecs(oneMinuteBars[i].time);
-                if (barTime == QTime(9, 0)) {
+                if (oneMinuteBars[i].time % (3600 * 24) == (3600 * 9)) {
                     break;
                 }
             }
