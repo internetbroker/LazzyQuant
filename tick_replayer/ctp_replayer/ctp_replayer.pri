@@ -20,3 +20,5 @@ INCLUDEPATH *= \
     $$CTP_REPLAYER_FOLDER
 
 include($$LAZZYQUANT_ROOT/ctp/mduser.pri)
+
+unix:QMAKE_LFLAGS += -Wl,--as-needed

@@ -11,5 +11,5 @@ CTP_FOLDER = $$LAZZYQUANT_ROOT/ctp/$$SUB_FOLDER_PREFIX$$SUB_FOLDER_SUFFIX
 
 INCLUDEPATH *= $$CTP_FOLDER
 
-unix:LIBS += $$CTP_FOLDER/thosttraderapi_se.so
+unix:LIBS += -L$$CTP_FOLDER -l:thosttraderapi_se.so
 win32:LIBS += $$CTP_FOLDER/thosttraderapi_se.lib
