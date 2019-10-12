@@ -67,7 +67,7 @@ void RiskFree::checkCheapCallOptions(int underlyingIdx, int kIdx)
     auto vol = getVol(liquidity);
     if (vol > 0) {
         auto diff = underlying.bidPrice - pDepthMarkets->getKByIdx(kIdx);
-        if (diff > 0.000001 && isTimeCloseEnouogh(underlying.time, callOption.time, TIME_DIFF)) {    // 实值期权, diff = 实值额
+        if (diff > 0.000001 && qAbs(underlying.time - callOption.time) < TIME_DIFF) {    // 实值期权, diff = 实值额.
             auto premium = callOption.askPrice;
             if ((premium + threshold) < diff) {
                 buyOption(underlyingIdx, CALL_OPT, kIdx, vol, premium);
@@ -114,7 +114,7 @@ void RiskFree::checkCheapPutOptions(int underlyingIdx, int kIdx)
     auto vol = getVol(liquidity);
     if (vol > 0) {
         auto diff = pDepthMarkets->getKByIdx(kIdx) - underlying.askPrice;
-        if (diff > 0.000001 && isTimeCloseEnouogh(underlying.time, putOption.time, TIME_DIFF)) {    // 实值期权.
+        if (diff > 0.000001 && qAbs(underlying.time - putOption.time) < TIME_DIFF) {    // 实值期权.
             auto premium = putOption.askPrice;
             if ((premium + threshold) < diff) {
                 buyOption(underlyingIdx, PUT_OPT, kIdx, vol, premium);
@@ -174,7 +174,7 @@ void RiskFree::checkReversedCallOptions(int underlyingIdx, int lowKIdx, int high
         auto lowPremium = lowKOption.askPrice;
         auto highPremium = highKOption.bidPrice;
         auto diff = highPremium - lowPremium;
-        if (diff > 1.0 && isTimeCloseEnouogh(lowKOption.time, highKOption.time, TIME_DIFF)) {
+        if (diff > 1.0 && qAbs(lowKOption.time - highKOption.time) < TIME_DIFF) {
             buyOption(underlyingIdx, CALL_OPT, lowKIdx, vol, lowPremium);
             sellOption(underlyingIdx, CALL_OPT, highKIdx, vol, highPremium);
 
@@ -231,7 +231,7 @@ void RiskFree::checkReversedPutOptions(int underlyingIdx, int lowKIdx, int highK
         auto lowPremium = lowKOption.bidPrice;
         auto highPremium = highKOption.askPrice;
         auto diff = lowPremium - highPremium;
-        if (diff > 1.0 && isTimeCloseEnouogh(lowKOption.time, highKOption.time, TIME_DIFF)) {
+        if (diff > 1.0 && qAbs(lowKOption.time - highKOption.time) < TIME_DIFF) {
             buyOption(underlyingIdx, PUT_OPT, highKIdx, vol, highPremium);
             sellOption(underlyingIdx, PUT_OPT, lowKIdx, vol, lowPremium);
 

@@ -1,4 +1,3 @@
-#include "common_utility.h"
 #include "BigHit_strategy.h"
 
 #include <QVariant>
@@ -45,7 +44,7 @@ void BigHitStrategy::onNewBar()
     int i = 0;
     for (; i < (count - 1); i++) {
         const auto barTime = barList->at(i).time;
-        if (isTimeCloseEnouogh(barTime, lastTime, 5400) && (vol < barList->at(i).volume) && (barTime % 86400 != 32400)) {
+        if (qAbs(barTime - lastTime) < 5400 && (vol < barList->at(i).volume) && (barTime % 86400 != 32400)) {
             break;
         }
     }
@@ -64,7 +63,7 @@ void BigHitStrategy::onNewBar()
 void BigHitStrategy::onNewTick(qint64 time, double lastPrice)
 {
     if (!recentPrices.empty()) {
-        while (!recentPrices.empty() && !isTimeCloseEnouogh(recentPrices.head().first, time, dT)) {
+        while (!recentPrices.empty() && qAbs(recentPrices.head().first - time) >= dT) {
             recentPrices.dequeue();
         }
 

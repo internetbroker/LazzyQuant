@@ -19,8 +19,8 @@ class AddOnTrailingStop : public SingleTimeFrameStrategy
     Q_OBJECT
 
 public:
-    explicit AddOnTrailingStop(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent = 0);
-    ~AddOnTrailingStop() {}
+    explicit AddOnTrailingStop(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent = nullptr);
+    ~AddOnTrailingStop() override;
     friend class EnterSignalNeedConfirm;
 
     void setParameter(double AFstep, double AFmax, int openVol, int addOn1Vol);

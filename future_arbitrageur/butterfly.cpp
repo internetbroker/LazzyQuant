@@ -1,8 +1,12 @@
-#include "common_utility.h"
 #include "depth_market.h"
 #include "butterfly.h"
 
 #include <QDebug>
+
+static inline bool areCloseEnough(qint64 a, qint64 b, qint64 c, qint64 diff)
+{
+    return qMax(qMax(a, b), c) - qMin(a, qMin(b, c)) < diff;
+}
 
 Butterfly::Butterfly(const QString &strategyID, const QStringList &instruments, int maxPosition, int minPosition, double openThreshold, double closeThreshold, DepthMarketCollection *pDMC) :
     BaseStrategy(strategyID, pDMC),
@@ -33,20 +37,12 @@ void Butterfly::onInstrumentChanged(int idx)
     }
 }
 
-/*!
- * \brief Butterfly::check010
- * 中间月份合约价格的两倍大于相邻近月合约价格与相邻远月合约价格之和.
- *
- * \param firstIdx  近月合约索引.
- * \param secondIdx 中间月份合约索引.
- * \param thirdIdx  远月合约索引.
- */
 void Butterfly::check010()
 {
     const auto diff = second->bidPrice * 2.0 - first->askPrice - third->askPrice;
     const bool openClose = (position >= 0);
     const auto threshold = openClose ? openThreshold : closeThreshold;
-    if (diff > threshold && isTimeCloseEnouogh(first->time, second->time, third->time, 420)) {
+    if (diff > threshold && areCloseEnough(first->time, second->time, third->time, 420)) {
         const auto liquidity = qMin(qMin(first->askVolume, third->askVolume), second->bidVolume / 2);
         auto vol = qMin(liquidity / 2, (openClose ? (maxPosition - position) : (-position)));
         if (vol > 0) {
@@ -69,20 +65,12 @@ void Butterfly::check010()
     }
 }
 
-/*!
- * \brief Butterfly::check101
- * 中间月份合约价格的两倍小于相邻近月合约价格与相邻远月合约价格之和.
- *
- * \param firstIdx  近月合约索引.
- * \param secondIdx 中间月份合约索引.
- * \param thirdIdx  远月合约索引.
- */
 void Butterfly::check101()
 {
     const auto diff = first->bidPrice + third->bidPrice - second->askPrice * 2.0;
     const bool openClose = (position <= 0);
     const auto threshold = openClose ? openThreshold : closeThreshold;
-    if (diff > threshold && isTimeCloseEnouogh(first->time, second->time, third->time, 420)) {
+    if (diff > threshold && areCloseEnough(first->time, second->time, third->time, 420)) {
         const auto liquidity = qMin(qMin(first->bidVolume, third->bidVolume), second->askVolume / 2);
         auto vol = qMin(liquidity / 2, (openClose ? (position - minPosition) : (position)));
         if (vol > 0) {

@@ -6,13 +6,35 @@
 #include <QSqlError>
 #include <QDebug>
 
+bool checkAndReopenDbIfNotAlive()
+{
+    QSqlDatabase sqlDB = QSqlDatabase::database();
+    QSqlQuery qry(sqlDB);
+    bool ret = qry.exec("SHOW PROCESSLIST");
+    if (!ret) {
+        qWarning().noquote() << qry.lastError();
+        qWarning().noquote() << "Execute query failed! Will re-open database!";
+        sqlDB.close();
+        if (sqlDB.open()) {
+            ret = qry.exec("SHOW PROCESSLIST");
+        } else {
+            qCritical().noquote() << qry.lastError();
+            qCritical().noquote() << "Re-open database failed!";
+        }
+    }
+    if (ret) {
+        qDebug() << "Total" << qry.size() << "processes in mysql.";
+    }
+    return ret;
+}
+
 bool createDbIfNotExist(const QString &dbName)
 {
     QSqlDatabase sqlDB = QSqlDatabase::database();
     QSqlQuery qry(sqlDB);
     if (!qry.exec("SHOW DATABASES")) {
-        qCritical().noquote() << "Show databases failed!";
         qCritical().noquote() << qry.lastError();
+        qCritical().noquote() << "Show databases failed!";
         return false;
     }
     QStringList existDbNames;
@@ -22,8 +44,8 @@ bool createDbIfNotExist(const QString &dbName)
     }
     if (!existDbNames.contains(dbName, Qt::CaseInsensitive)) {
         if (!qry.exec("CREATE DATABASE " + dbName)) {
-            qCritical().noquote() << "Create database" << dbName << "failed!";
             qCritical().noquote() << qry.lastError();
+            qCritical().noquote() << "Create database" << dbName << "failed!";
             return false;
         }
     }
@@ -32,29 +54,30 @@ bool createDbIfNotExist(const QString &dbName)
 
 bool createTablesIfNotExist(const QString &dbName, const QStringList &tableNames, const QString &format)
 {
-    int ret = true;
+    bool ret = true;
     QSqlDatabase sqlDB = QSqlDatabase::database();
-    QSqlQuery qry(sqlDB);
     QString oldDbName = sqlDB.databaseName();
-    if (oldDbName.toLower() != dbName.toLower()) {
+    bool isDifferentDbName = oldDbName.compare(dbName, Qt::CaseInsensitive);
+    if (isDifferentDbName) {
         sqlDB.close();
         sqlDB.setDatabaseName(dbName);
         sqlDB.open();
     }
     const auto existTables = sqlDB.tables();
+    QSqlQuery qry(sqlDB);
     for (const auto &tableToCreate : tableNames) {
         if (!existTables.contains(tableToCreate, Qt::CaseInsensitive)) {
-            bool ok = qry.exec(QString("CREATE TABLE %1.%2 %3").arg(dbName).arg(tableToCreate).arg(format));
+            bool ok = qry.exec(QString("CREATE TABLE %1.%2 %3").arg(dbName, tableToCreate, format));
             if (!ok) {
                 ret = false;
-                qCritical().noquote().nospace() << "Create table " << dbName << "." << tableToCreate << " failed!";
                 qCritical().noquote() << qry.lastError();
+                qCritical().noquote().nospace() << "Create table " << dbName << "." << tableToCreate << " failed!";
                 break;
             }
         }
     }
 
-    if (oldDbName.toLower() != dbName.toLower()) {
+    if (isDifferentDbName) {
         sqlDB.close();
         sqlDB.setDatabaseName(oldDbName);
         sqlDB.open();

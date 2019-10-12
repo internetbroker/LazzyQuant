@@ -2,15 +2,21 @@
 #define CONNECTION_MANAGER_H
 
 #include <QList>
-
-class QObject;
+#include <QObject>
+#include <QMetaObject>
 
 class ConnectionManager
 {
-    QList<QObject *> senders;
+    QList<QMetaObject::Connection> connections;
+
 public:
-    ConnectionManager(const QList<QObject *> &inputs, const QList<QObject *> &strategies);
+    ConnectionManager(const QObjectList &inputs, const QObjectList &strategies);
     ~ConnectionManager();
+
+    ConnectionManager(const ConnectionManager &arg) = delete;
+    ConnectionManager(const ConnectionManager &&arg) = delete;
+    ConnectionManager& operator=(const ConnectionManager &arg) = delete;
+    ConnectionManager& operator=(const ConnectionManager &&arg) = delete;
 };
 
 #endif // CONNECTION_MANAGER_H

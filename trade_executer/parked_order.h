@@ -18,7 +18,7 @@ public:
         DELETED,
     };
 
-    ParkedOrder() {}
+    ParkedOrder() = default;
     ParkedOrder(QByteArray id,
                 Status status,
                 QString instrument,
@@ -27,8 +27,8 @@ public:
                 bool direction
                 );
 
-    friend QDBusArgument &operator<<(QDBusArgument &argument, const ParkedOrder &message);
-    friend const QDBusArgument &operator>>(const QDBusArgument &argument, ParkedOrder &message);
+    friend QDBusArgument &operator<<(QDBusArgument &argument, const ParkedOrder &order);
+    friend const QDBusArgument &operator>>(const QDBusArgument &argument, ParkedOrder &order);
     friend QDebug operator<<(QDebug dbg, const ParkedOrder &order);
 
     QByteArray getId() const;

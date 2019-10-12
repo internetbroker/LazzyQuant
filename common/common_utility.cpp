@@ -64,7 +64,7 @@ bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type
             break;
         }
     }
-    exercisePrice = optionID.right(len - i).toInt();
+    exercisePrice = optionID.rightRef(len - i).toInt();
     return true;    // TODO successfull or not
 }
 
@@ -77,12 +77,15 @@ bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type
  * \param exercisePrice 执行价格.
  * \return 期权合约代码.
  */
-QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int exercisePrice)
+QString makeOptionID(const QString &futureID, OPTION_TYPE type, int exercisePrice)
 {
     static const QMap<QString, QString> optionIdPatternMap = {
         {"m", "%1-%2-%3"},
+        {"c", "%1-%2-%3"},
         {"SR", "%1%2%3"},
+        {"CF", "%1%2%3"},
         {"cu", "%1%2%3"},
+        {"ru", "%1%2%3"},
     };
 
     QChar middle = (type == CALL_OPT) ? 'C' : 'P';
@@ -115,10 +118,34 @@ std::unique_ptr<QSettings> getSettingsSmart(const QString &organization, const Q
     const QString localFileName = QCoreApplication::applicationDirPath() + "/" + name + ".ini";
     QFile localFile(localFileName);
     if (localFile.exists()) {
-        return std::unique_ptr<QSettings>(new QSettings(localFileName, QSettings::IniFormat, parent));
-    } else {
-        return std::unique_ptr<QSettings>(new QSettings(QSettings::IniFormat, QSettings::UserScope, organization, name, parent));
+        return std::make_unique<QSettings>(localFileName, QSettings::IniFormat, parent);
+    } 
+    return std::make_unique<QSettings>(QSettings::IniFormat, QSettings::UserScope, organization, name, parent);
+}
+
+/*!
+ * \brief getSettingItemList
+ * 获取该小节的所有启用的配置项名.
+ * xxx=1表示启用该配置.
+ * xxx=0表示不启用.
+ *
+ * \param settings  QSettings指针.
+ * \param groupName 配置所在的小节名.
+ * \return 启用的配置项表.
+ */
+QStringList getSettingItemList(QSettings *settings, const QString &groupName)
+{
+    QStringList itemList;
+    settings->beginGroup(groupName);
+    const auto tmpList = settings->childKeys();
+    for (const auto &key : tmpList) {
+        if (settings->value(key).toBool()) {
+            itemList.append(key);
+        }
     }
+    settings->endGroup();
+    itemList.removeDuplicates();
+    return itemList;
 }
 
 #define String const QString&

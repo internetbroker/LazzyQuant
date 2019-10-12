@@ -44,18 +44,17 @@ public:
         HOUR12  = 0x10000000,
         DAY     = 0x20000000,
         WEEK    = 0x40000000,
-        MONTH   = 0x80000000,
+        MONTH   = (int)0x80000000,
     };
     Q_DECLARE_FLAGS(TimeFrames, TimeFrame)
     Q_FLAG(TimeFrames)
 
     explicit BarCollector(const QString &instrumentID, int timeFrameFlags, bool saveBarsToDB, QObject *parent = nullptr);
-    ~BarCollector();
 
     Bar *getBarPtr(int timeFrame) {
         return &barMap[timeFrame];
     }
-    void setTradingDay(const QString &tradingDay);
+    void setTradingDay(const QString &tradingDay, const QDateTime &eraseFrom);
     bool onMarketData(qint64 currentTime, double lastPrice, int volume);
 
 protected:

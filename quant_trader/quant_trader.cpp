@@ -1,12 +1,17 @@
+#include <algorithm>
 #include <QCoreApplication>
 #include <QFile>
 #include <QSettings>
+#include <QDataStream>
+#include <QDateTime>
+#include <QTimeZone>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
 
 #include "config.h"
 #include "common_utility.h"
+#include "trading_calendar.h"
 #include "quant_trader.h"
 #include "bar.h"
 #include "bar_collector.h"
@@ -44,10 +49,10 @@ void QuantTrader::loadQuantTraderSettings(const CONFIG_ITEM &config)
     settings->endGroup();
 
     settings->beginGroup("Database");
-    dbDriver = settings->value("driver").toString();
-    dbHostName = settings->value("hostname").toString();
-    dbUserName = settings->value("username").toString();
-    dbPassword = settings->value("password").toString();
+    auto dbDriver = settings->value("driver").toString();
+    auto dbHostName = settings->value("hostname").toString();
+    auto dbUserName = settings->value("username").toString();
+    auto dbPassword = settings->value("password").toString();
     settings->endGroup();
 
     QSqlDatabase sqlDB = QSqlDatabase::addDatabase(dbDriver);
@@ -223,7 +228,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, int timeFrame)
 
     // Load Collector Bars
     QList<Bar> collectedBarList;
-    const QString tableName = QString("%1_%2").arg(instrumentID).arg(time_frame_str);
+    const QString tableName = QString("%1_%2").arg(instrumentID, time_frame_str);
     QSqlDatabase sqlDB = QSqlDatabase::database();
     const QStringList tables = sqlDB.isOpen() ? sqlDB.tables() : QStringList();
     if (tables.contains(tableName, Qt::CaseInsensitive)) {
@@ -452,9 +457,26 @@ void QuantTrader::setTradingDay(const QString &tradingDay)
 {
     qDebug() << "Set Trading Day to" << tradingDay;
 
+    // 计算从哪个时间点开始, 把后面的数据删除.
+    const QDate tradingDate = QDate::fromString(tradingDay, QStringLiteral("yyyyMMdd"));
+    const QDate openDate = TradingCalendar::getInstance()->getOpenDay(tradingDate);
+    QDateTime eraseFrom(((tradingDate == openDate) ? tradingDate.addDays(-1) : openDate), QTime(20, 0), QTimeZone::utc());
+
+    const auto instruments = bars_map.keys();
+    for (const auto &instrumentID : instruments) {
+        auto &tmpMap = bars_map[instrumentID];
+        const auto tfList = tmpMap.keys();
+        for (auto &tf : tfList) {
+            auto &tmpBarList = tmpMap[tf];
+            auto it = std::lower_bound(tmpBarList.begin(), tmpBarList.end(), eraseFrom.toSecsSinceEpoch(),
+                                       [](const Bar &item1, const Bar &item2) -> bool { return item1.time < item2.time; });
+            tmpBarList.erase(it, tmpBarList.end());
+        }
+    }
+
     if (tradingDay != currentTradingDay) {
         for (auto * collector : qAsConst(collector_map)) {
-            collector->setTradingDay(tradingDay);
+            collector->setTradingDay(tradingDay, eraseFrom);
         }
         currentTradingDay = tradingDay;
     }
@@ -542,36 +564,6 @@ void QuantTrader::onMarketClose()
     }
 }
 
-/*!
- * \brief QuantTrader::checkDataBaseStatus
- * 检查数据库连接状态, 如果连接已经失效, 断开重连.
- *
- * \return 数据库连接状态, true正常, false不正常.
- */
-bool QuantTrader::checkDataBaseStatus()
-{
-    QSqlDatabase sqlDB = QSqlDatabase::database();
-    QSqlQuery qry(sqlDB);
-    bool ret = qry.exec("SHOW PROCESSLIST");
-    if (!ret) {
-        qWarning().noquote() << "Execute query failed! Will re-open database!";
-        qWarning().noquote() << qry.lastError();
-        sqlDB.close();
-        if (sqlDB.open()) {
-            ret = qry.exec("SHOW PROCESSLIST");
-        } else {
-            qCritical().noquote() << "Re-open database failed!";
-            qCritical().noquote() << qry.lastError();
-        }
-    }
-    if (ret) {
-        while (qry.next()) {
-            qInfo() << qry.value(0).toLongLong() << qry.value(1).toString();
-        }
-    }
-    return ret;
-}
-
 void QuantTrader::onModified(const QString &name)
 {
     auto *editable = editableMap.value(name.toLower(), nullptr);
@@ -624,24 +616,19 @@ QStringList QuantTrader::getStrategyId(const QString &instrument) const
 {
     if (instrument.isEmpty()) {
         return strategyIdMap.keys();
-    } else {
-        const auto strategyList = strategy_map.values(instrument);
-        QStringList strategyIdList;
-        for (const auto item : strategyList) {
-            strategyIdList << item->getId();
-        }
-        return strategyIdList;
     }
+    const auto strategyList = strategy_map.values(instrument);
+    QStringList strategyIdList;
+    for (const auto item : strategyList) {
+        strategyIdList << item->getId();
+    }
+    return strategyIdList;
 }
 
 bool QuantTrader::getStrategyEnabled(const QString &id) const
 {
     auto pStrategy = strategyIdMap.value(id);
-    if (pStrategy) {
-        return pStrategy->isEnabled();
-    } else {
-        return false;
-    }
+    return pStrategy && pStrategy->isEnabled();
 }
 
 void QuantTrader::setStrategyEnabled(const QString &id, bool state)

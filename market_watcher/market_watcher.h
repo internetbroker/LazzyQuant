@@ -2,13 +2,12 @@
 #define MARKET_WATCHER_H
 
 #include <QObject>
-#include <QAtomicInt>
 #include <QStringList>
 #include <QSet>
-#include <QMap>
+#include <QHash>
+#include <QVector>
 #include <QTime>
 
-#include "trading_calendar.h"
 #include "time_mapper.h"
 
 class QSettings;
@@ -23,36 +22,34 @@ class MarketWatcher : public QObject {
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.market_watcher")
 
 public:
-    explicit MarketWatcher(const CONFIG_ITEM &config, bool replayMode = false, QObject *parent = nullptr);
+    explicit MarketWatcher(const CONFIG_ITEM &config, QObject *parent = nullptr);
     ~MarketWatcher() override;
 
 protected:
-    TradingCalendar tradingCalendar;
+    QString currentTradingDay;
     TimeMapper mapTime;
 
     const QString name;
-    const bool replayMode;
     QSettings *settings;
 
-    QAtomicInt nRequestID;
+    int nRequestID = 0;
     CThostFtdcMdApi *pUserApi;
     CTickReceiver *pReceiver;
 
-    bool loggedIn;
+    bool loggedIn = false;
     QSet<QString> subscribeSet;
-    QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;   // 交易时间段总表.
-    QMap<QString, QPair<int, int>> currentTradingTimeMap;   // 当前, 或下一交易时段表.
+    QHash<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;  //!< 各合约交易时间段表.
+    QHash<QString, QVector<qint64>> mappedTimePointLists;       //!< 当前交易日, 各合约交易开始及结束时间点表.
 
     bool saveDepthMarketData;
     QString saveDepthMarketDataPath;
     QTime localTime;    // 用来在保存行情数据时生成一个本地的时间戳, 以记录行情到达的先后顺序.
-    QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
+    QHash<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
 
-    MultipleTimer *multiTimer;
+    MultipleTimer *multiTimer = nullptr;
     QList<QStringList> instrumentsToProcess;
     void setupTimers();
     void timesUp(int index);
-    void setCurrentTradingTime(const QString &instrumentID);
 
     QByteArray brokerID;
     QByteArray userID;
@@ -62,27 +59,22 @@ protected:
 
     void login();
     void subscribe();
-    bool checkTradingTimes(const QString &instrumentID);
-    void processDepthMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField);
-    void emitNewMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField);
+    void setupTradingTimeRanges();
+    void mapTradingTimePoints();
+    void processDepthMarketData(const CThostFtdcDepthMarketDataField &depthMarketDataField);
 
 signals:
-    void tradingDayChanged(const QString& tradingDay);
-    void endOfReplay(const QString& tradingDay);
-    void newMarketData(const QString& instrumentID, qint64 time, double lastPrice, int volume,
+    void tradingDayChanged(const QString &tradingDay);
+    void newMarketData(const QString &instrumentID, qint64 time, double lastPrice, int volume,
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:
     QString getStatus() const;
-    bool isReplayMode() const { return replayMode; }
     bool isLoggedIn() const { return loggedIn; }
     QString getTradingDay() const;
-    void setTradingDay(const QString &tradingDay);
     void subscribeInstruments(const QStringList &instruments, bool updateIni = true);
     QStringList getSubscribeList() const;
-    void startReplay(const QString &date);
     void quit();
 };
 
 #endif // MARKET_WATCHER_H
-

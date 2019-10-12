@@ -2,8 +2,11 @@
 #include "strategy_status.h"
 #include "common_utility.h"
 
+#include <QDateTime>
 #include <QSettings>
 #include <QDebugStateSaver>
+
+#define DATE_TIME (QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz")))
 
 QDebug operator<<(QDebug dbg, const StrategyStatus &status)
 {

@@ -123,7 +123,7 @@ CtpExecuter::~CtpExecuter()
 
 void CtpExecuter::customEvent(QEvent *event)
 {
-    qDebug() << "customEvent:" << int(event->type());
+    qDebug() << "TradeExecuter event:" << int(event->type());
     switch (int(event->type())) {
     case ERROR_ID_MSG:
     {
@@ -602,7 +602,6 @@ void CtpExecuter::customEvent(QEvent *event)
 
 void CtpExecuter::timerEvent(QTimerEvent *event)
 {
-    Q_UNUSED(event)
     if (event->timerId() == queueTimerId) {
         if (!queuedQueries.isEmpty()) {
             auto ctpQry = queuedQueries.dequeue();
@@ -631,19 +630,19 @@ void CtpExecuter::timerEvent(QTimerEvent *event)
 template<typename T>
 int CtpExecuter::callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T * pField)
 {
-    int id = nRequestID.fetchAndAddRelaxed(1);
+    nRequestID++;
     if (queuedQueries.isEmpty()) {
-        int ret = (pUserApi->*pTraderApi)(pField, id);
+        int ret = (pUserApi->*pTraderApi)(pField, nRequestID);
         if (ret == 0) {
             free(pField);
-            return id;
+            return nRequestID;
         } else {
             queueTimerId = startTimer(1001);
         }
     }
-    AbstractQuery *pQry = new CtpQuery<T>(pUserApi, pTraderApi, pField, id);
+    AbstractQuery *pQry = new CtpQuery<T>(pUserApi, pTraderApi, pField, nRequestID);
     queuedQueries.enqueue(pQry);
-    return id;
+    return nRequestID;
 }
 
 void CtpExecuter::loginStateMachine()
@@ -695,10 +694,9 @@ int CtpExecuter::authenticate()
     strcpy(reqAuthenticate.UserProductInfo, userProductInfo);
     strcpy(reqAuthenticate.AuthCode, authenticateCode);
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqAuthenticate(&reqAuthenticate, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqAuthenticate(&reqAuthenticate, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -716,10 +714,9 @@ int CtpExecuter::userLogin()
     strcpy(reqUserLogin.Password, password);
     strcpy(reqUserLogin.UserProductInfo, userProductInfo);
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqUserLogin(&reqUserLogin, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqUserLogin(&reqUserLogin, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -735,10 +732,9 @@ int CtpExecuter::userLogout()
     strcpy(userLogout.BrokerID, brokerID);
     strcpy(userLogout.UserID, userID);
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqUserLogout(&userLogout, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqUserLogout(&userLogout, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -770,10 +766,9 @@ int CtpExecuter::settlementInfoConfirm()
     strcpy(confirmField.BrokerID, brokerID);
     strcpy(confirmField.InvestorID, userID);
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqSettlementInfoConfirm(&confirmField, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqSettlementInfoConfirm(&confirmField, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -915,10 +910,9 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, int openClose, int 
     inputOrder.LimitPrice = price;
     inputOrder.TimeCondition = gfdOrIoc ? THOST_FTDC_TC_GFD : THOST_FTDC_TC_IOC;
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqOrderInsert(&inputOrder, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqOrderInsert(&inputOrder, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -955,10 +949,9 @@ int CtpExecuter::insertMarketOrder(const QString &instrument, int openClose, int
     inputOrder.LimitPrice = 0;
     inputOrder.TimeCondition = THOST_FTDC_TC_IOC;
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqOrderInsert(&inputOrder, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqOrderInsert(&inputOrder, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1001,10 +994,9 @@ int CtpExecuter::insertCombineOrder(const QString &instrument, int openClose1, i
     inputOrder.LimitPrice = price;
     inputOrder.TimeCondition = gfdOrIoc ? THOST_FTDC_TC_GFD : THOST_FTDC_TC_IOC;
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqOrderInsert(&inputOrder, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqOrderInsert(&inputOrder, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1029,10 +1021,9 @@ int CtpExecuter::orderAction(const QString &instrument, const char *orderRef, in
     orderAction.SessionID = sessionID;
     orderAction.ActionFlag = THOST_FTDC_AF_Delete;
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqOrderAction(&orderAction, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqOrderAction(&orderAction, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1072,10 +1063,9 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose
     parkedOrder.LimitPrice = price;
     parkedOrder.TimeCondition = gfdOrIoc ? THOST_FTDC_TC_GFD : THOST_FTDC_TC_IOC;
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqParkedOrderInsert(&parkedOrder, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqParkedOrderInsert(&parkedOrder, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1099,10 +1089,9 @@ int CtpExecuter::insertParkedOrderAction(const QString &instrument, const char *
     strcpy(parkedOrderAction.InstrumentID, instrument.toLatin1().constData());
     parkedOrderAction.ActionFlag = THOST_FTDC_AF_Delete;
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqParkedOrderAction(&parkedOrderAction, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqParkedOrderAction(&parkedOrderAction, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1120,10 +1109,9 @@ int CtpExecuter::removeParkedOrder(const char *parkedOrderID)
     strcpy(removeParkedOrder.InvestorID, userID);
     memcpy(removeParkedOrder.ParkedOrderID, parkedOrderID, sizeof(TThostFtdcParkedOrderIDType));
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqRemoveParkedOrder(&removeParkedOrder, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqRemoveParkedOrder(&removeParkedOrder, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1141,10 +1129,9 @@ int CtpExecuter::removeParkedOrderAction(const char *parkedOrderActionID)
     strcpy(removeParkedOrderAction.InvestorID, userID);
     memcpy(removeParkedOrderAction.ParkedOrderActionID, parkedOrderActionID, sizeof(TThostFtdcParkedOrderActionIDType));
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqRemoveParkedOrderAction(&removeParkedOrderAction, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqRemoveParkedOrderAction(&removeParkedOrderAction, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1271,10 +1258,9 @@ int CtpExecuter::insertExecOrder(const QString &instrument, OPTION_TYPE type, in
     exc.ReservePositionFlag = THOST_FTDC_EOPF_Reserve;
     exc.CloseFlag = THOST_FTDC_EOCF_NotToClose;
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqExecOrderInsert(&exc, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqExecOrderInsert(&exc, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1292,10 +1278,9 @@ int CtpExecuter::insertReqForQuote(const QString &instrument)
     strcpy(quote.InvestorID, userID);
     strcpy(quote.InstrumentID, instrument.toLatin1().constData());
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqForQuoteInsert(&quote, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqForQuoteInsert(&quote, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1331,10 +1316,9 @@ int CtpExecuter::fromBankToFuture(double amount)
     strcpy(reqTransfer.CurrencyID, "CNY");
     reqTransfer.TradeAmount = amount;
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqFromBankToFutureByFuture(&reqTransfer, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqFromBankToFutureByFuture(&reqTransfer, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1355,10 +1339,9 @@ int CtpExecuter::fromFutureToBank(double amount)
     strcpy(reqTransfer.CurrencyID, "CNY");
     reqTransfer.TradeAmount = amount;
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqFromFutureToBankByFuture(&reqTransfer, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqFromFutureToBankByFuture(&reqTransfer, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1378,10 +1361,9 @@ int CtpExecuter::queryBankAccountMoney()
     strcpy(reqQueryAccount.Password, password);
     strcpy(reqQueryAccount.CurrencyID, "CNY");
 
-    int id = nRequestID.fetchAndAddRelaxed(1);
-    int ret = pUserApi->ReqQueryBankAccountMoneyByFuture(&reqQueryAccount, id);
-    Q_UNUSED(ret);
-    return id;
+    int ret = pUserApi->ReqQueryBankAccountMoneyByFuture(&reqQueryAccount, nRequestID++);
+    Q_UNUSED(ret)
+    return nRequestID;
 }
 
 /*!
@@ -1536,7 +1518,7 @@ QString CtpExecuter::getStatus() const
 
 /*!
  * \brief CtpExecuter::getTradingDay
- * 获取交易日
+ * 获取交易日.
  *
  * \return 交易日(YYYYMMDD)
  */
@@ -1568,8 +1550,6 @@ void CtpExecuter::updateAccountInfo()
  * \brief CtpExecuter::updateInstrumentDataCache
  * 请求查询合约基本信息和当前市价信息.
  * 返回结果将被存入缓存, 供盘中快速查询.
- *
- * \param instruments 合约代码列表.
  */
 void CtpExecuter::updateInstrumentDataCache()
 {
@@ -1618,9 +1598,8 @@ QString CtpExecuter::getExchangeID(const QString &instrument)
 
     if (instrumentDataCache.contains(instrument)) {
         return instrumentDataCache.value(instrument).ExchangeID;
-    } else {
-        return QString();
-    }
+    } 
+    return QString();
 }
 
 /*!
@@ -1637,9 +1616,8 @@ QString CtpExecuter::getExpireDate(const QString &instrument)
 
     if (instrumentDataCache.contains(instrument)) {
         return instrumentDataCache.value(instrument).ExpireDate;
-    } else {
-        return INVALID_DATE_STRING;
-    }
+    } 
+    return INVALID_DATE_STRING;
 }
 
 /*!
@@ -1656,9 +1634,8 @@ double CtpExecuter::getUpperLimit(const QString &instrument)
 
     if (upperLowerLimitCache.contains(instrument)) {
         return upperLowerLimitCache.value(instrument).first;
-    } else {
-        return -DBL_MAX;
-    }
+    } 
+    return -DBL_MAX;
 }
 
 /*!
@@ -1675,9 +1652,8 @@ double CtpExecuter::getLowerLimit(const QString &instrument)
 
     if (upperLowerLimitCache.contains(instrument)) {
         return upperLowerLimitCache.value(instrument).second;
-    } else {
-        return DBL_MAX;
-    }
+    } 
+    return DBL_MAX;
 }
 
 /*!
@@ -2116,7 +2092,7 @@ void CtpExecuter::cancelOrder(const QString &instrument, qulonglong orderRefID, 
  */
 void CtpExecuter::cancelAllOrders(const QString &instrument)
 {
-    qInfo() << __FUNCTION__ << instrument;
+    qInfo().noquote() << __FUNCTION__ << instrument;
     CHECK_LOGIN_STATE()
     CHECK_USER_CACHE_READY()
 
@@ -2278,7 +2254,7 @@ void CtpExecuter::deleteParkedOrderCancel(qulonglong id)
  */
 void CtpExecuter::setPosition(const QString &instrument, int newPosition)
 {
-    qInfo() << __FUNCTION__ << instrument << ", newPosition =" << newPosition;
+    qInfo().noquote() << __FUNCTION__ << QString("%1 = %2").arg(instrument).arg(newPosition);
     CHECK_LOGIN_STATE()
     CHECK_USER_CACHE_READY()
     CHECK_MARKET_CACHE_READY()
@@ -2305,7 +2281,7 @@ void CtpExecuter::setPosition(const QString &instrument, int newPosition)
  */
 int CtpExecuter::getPosition(const QString &instrument) const
 {
-    qInfo() << __FUNCTION__ << instrument;
+    qInfo().noquote() << __FUNCTION__ << instrument;
     CHECK_USER_CACHE_READY_RET(-INT_MAX)
 
     qDebug() << "ydLongPositions =" << ydLongPositions.value(instrument);

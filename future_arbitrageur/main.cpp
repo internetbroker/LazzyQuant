@@ -7,12 +7,10 @@
 #include "future_arbitrageur.h"
 #include "connection_manager.h"
 
-#include "sinyee_replayer_interface.h"
+#include "tick_replayer_interface.h"
 #include "market_watcher_interface.h"
 #include "trade_executer_interface.h"
 
-com::lazzyquant::sinyee_replayer *pReplayer = nullptr;
-com::lazzyquant::market_watcher *pWatcher = nullptr;
 com::lazzyquant::trade_executer *pExecuter = nullptr;
 StrategyStatusManager *pStatusManager = nullptr;
 
@@ -42,10 +40,12 @@ int main(int argc, char *argv[])
         replayDate = parser.value("replay");
     }
     bool log2File = parser.isSet("logtofile");
-    setupMessageHandler(true, log2File, "future_arbitrageur");
+    setupMessageHandler(true, log2File, "future_arbitrageur", !replayMode);
 
+    com::lazzyquant::tick_replayer *pReplayer = nullptr;
+    com::lazzyquant::market_watcher *pWatcher = nullptr;
     if (replayMode) {
-        pReplayer = new com::lazzyquant::sinyee_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
+        pReplayer = new com::lazzyquant::tick_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
     } else {
         pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
     }
@@ -61,12 +61,8 @@ int main(int argc, char *argv[])
 
     delete pStatusManager;
     delete pExecuter;
-    if (pReplayer) {
-        delete pReplayer;
-    }
-    if (pWatcher) {
-        delete pWatcher;
-    }
+    delete pReplayer;
+    delete pWatcher;
     restoreMessageHandler();
     return ret;
 }

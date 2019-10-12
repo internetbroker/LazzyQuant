@@ -1,8 +1,8 @@
 #include <cfloat>
 #include <QSettings>
-#include <QStringList>
 
 #include "config.h"
+#include "common_utility.h"
 #include "option_helper.h"
 #include "option_pricing.h"
 #include "depth_market.h"
@@ -36,12 +36,9 @@ OptionArbitrageur::~OptionArbitrageur()
 {
     qDebug() << "~OptionArbitrageur";
 
-    if (pPricingEngine != nullptr)
-        delete pPricingEngine;
-    if (pDepthMarkets != nullptr)
-        delete pDepthMarkets;
-    if (pStrategy != nullptr)
-        delete pStrategy;
+    delete pPricingEngine;
+    delete pDepthMarkets;
+    delete pStrategy;
 }
 
 void OptionArbitrageur::loadOptionArbitrageurSettings()
@@ -50,34 +47,13 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
     riskFreeInterestRate = settings->value("RiskFreeInterestRate", 0.05).toDouble();
     qInfo() << "Risk-free interest rate =" << riskFreeInterestRate;
 
-    settings->beginGroup("Underlyings");
-    const auto underlyingList = settings->childKeys();
-    for (const auto &key : underlyingList) {
-        if (settings->value(key).toBool()) {
-            underlyingIDs.insert(key);
-        }
-    }
-    settings->endGroup();
+    underlyingIDs = getSettingItemList(settings.get(), "Underlyings");
     qInfo() << "Underlyings:" << underlyingIDs;
 
-    settings->beginGroup("RiskFree");
-    const auto riskFreeList = settings->childKeys();
-    for (const auto &key : riskFreeList) {
-        if (settings->value(key).toBool()) {
-            underlyingsForRiskFree << key;
-        }
-    }
-    settings->endGroup();
+    underlyingsForRiskFree = getSettingItemList(settings.get(), "RiskFree");
     qInfo() << "UnderlyingsForRiskFree:" << underlyingsForRiskFree;
 
-    settings->beginGroup("HighFreq");
-    const auto highFreqList = settings->childKeys();
-    for (const auto &key : highFreqList) {
-        if (settings->value(key).toBool()) {
-            underlyingsForHighFreq << key;
-        }
-    }
-    settings->endGroup();
+    underlyingsForHighFreq = getSettingItemList(settings.get(), "HighFreq");
     qInfo() << "UnderlyingsForHighFreq:" << underlyingsForHighFreq;
 }
 
@@ -166,7 +142,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     for (const auto &key : keys) {
         const auto endDate = pHelper->getEndDate(key);
         qInfo() << "Calculating:" << key << ", startDate =" << startDate << ", endDate =" << endDate;
-        pPricingEngine->generate(key, pHelper->getOptionTradingDays(key, startDate));
+        pPricingEngine->generate(key, getOptionTradingDays(key, startDate));
     }
 }
 

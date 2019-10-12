@@ -1,3 +1,4 @@
+#include <QHash>
 #include <QDebug>
 #include <QMetaEnum>
 #include <QDateTime>
@@ -48,14 +49,10 @@ BarCollector::BarCollector(const QString &instrumentID, int timeFrameFlags, bool
     }
 }
 
-BarCollector::~BarCollector()
-{
-}
-
 #define MIN_UNIT    60
 #define HOUR_UNIT   3600
 
-static const QMap<BarCollector::TimeFrame, int> g_time_table = {
+static const QHash<BarCollector::TimeFrame, int> g_time_table = {
     {BarCollector::SEC1,    1},
     {BarCollector::SEC2,    2},
     {BarCollector::SEC3,    3},
@@ -87,7 +84,7 @@ static const QMap<BarCollector::TimeFrame, int> g_time_table = {
     {BarCollector::DAY,    24 * HOUR_UNIT},
 };
 
-void BarCollector::setTradingDay(const QString &tradingDay)
+void BarCollector::setTradingDay(const QString &tradingDay, const QDateTime &eraseFrom)
 {
     auto tradingDateTime = QDateTime::fromString(tradingDay, QStringLiteral("yyyyMMdd"));
     tradingDateTime.setTimeZone(QTimeZone::utc());
@@ -95,6 +92,17 @@ void BarCollector::setTradingDay(const QString &tradingDay)
     if (tradingDayBase != newTradingDayBase) {
         tradingDayBase = newTradingDayBase;
         lastVolume = 0;
+    }
+
+    if (saveBarsToDB) {
+        for (int key : qAsConst(keys)) {
+            QString tableName = QString("%1_%2").arg(instrument, QMetaEnum::fromType<BarCollector::TimeFrames>().valueToKey(key));
+            auto sqlStmt = QString("DELETE FROM market.%1 where time > %2").arg(tableName).arg(eraseFrom.toSecsSinceEpoch());
+            QSqlQuery qry(sqlStmt);
+            if (qry.lastError().type() != QSqlError::NoError) {
+                qWarning().noquote() << qry.lastError().text();
+            }
+        }
     }
 }
 
@@ -148,7 +156,7 @@ void BarCollector::saveEmitReset(int timeFrame, Bar &bar)
             saveBar(timeFrame, bar);
         }
         emit collectedBar(instrument, timeFrame, bar);
-        qInfo().noquote() << instrument << ":" << bar;
+        qInfo().noquote() << instrument << bar;
         bar.reset();
     }
 }
@@ -158,7 +166,7 @@ void BarCollector::saveBar(int timeFrame, const Bar &bar)
     QSqlDatabase sqlDB = QSqlDatabase();
     QSqlQuery qry(sqlDB);
     QString tableName = QMetaEnum::fromType<TimeFrames>().valueToKey(timeFrame);
-    QString tableOfDB = QString("market.%1_%2").arg(instrument).arg(tableName);
+    QString tableOfDB = QString("market.%1_%2").arg(instrument, tableName);
     qry.prepare("INSERT INTO " + tableOfDB + " (time, open, high, low, close, tick_volume, volume, type) "
                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     qry.bindValue(0, bar.time);
@@ -171,8 +179,8 @@ void BarCollector::saveBar(int timeFrame, const Bar &bar)
     qry.bindValue(7, 1);
     bool ok = qry.exec();
     if (!ok) {
-        qCritical().noquote() << "Insert bar into" << tableOfDB << "failed!";
         qCritical().noquote() << qry.lastError();
+        qCritical().noquote() << "Insert bar into" << tableOfDB << "failed!";
     }
 }
 

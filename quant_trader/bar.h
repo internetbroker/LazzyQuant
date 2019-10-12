@@ -2,8 +2,9 @@
 #define BAR_H
 
 #include <QMetaType>
-#include <QDataStream>
 #include <QDebug>
+
+class QDataStream;
 
 typedef unsigned short      WORD;
 
@@ -32,6 +33,7 @@ public:
     qint64 volume;      // compatible with MT5
 
     Bar();
+    Bar(qint64 time);       //!< Make a stub bar with a timestamp.
     Bar(const KTExportBar &ktbar);
 
     void reset();
@@ -40,10 +42,9 @@ public:
 
 Q_DECLARE_METATYPE(Bar)
 
-QDataStream& operator>>(QDataStream& s, KTExportBar& bar);
-QDataStream& operator>>(QDataStream& s, Bar& bar);
-QDataStream& operator<<(QDataStream& s, const Bar& bar);
+QDataStream &operator>>(QDataStream &s, KTExportBar &bar);
+QDataStream &operator>>(QDataStream &s, Bar &bar);
+QDataStream &operator<<(QDataStream &s, const Bar &bar);
 QDebug operator<<(QDebug dbg, const Bar &bar);
 
 #endif // BAR_H
-

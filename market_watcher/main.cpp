@@ -2,7 +2,6 @@
 #include <QCommandLineParser>
 
 #include "config.h"
-#include "market.h"
 #include "message_handler.h"
 #include "market_watcher.h"
 #include "market_watcher_adaptor.h"
@@ -20,23 +19,16 @@ int main(int argc, char *argv[])
     parser.addVersionOption();
 
     parser.addOptions({
-        {{"r", "replay"},
-            QCoreApplication::translate("main", "Replay Mode")},
-        {{"f", "logtofile"},
-            QCoreApplication::translate("main", "Save log to a file")},
+        {{"f", "logtofile"}, "Save log to a file"},
     });
 
     parser.process(a);
-    bool replayMode = parser.isSet("replay");
     bool log2File = parser.isSet("logtofile");
     setupMessageHandler(true, log2File, "market_watcher");
 
-    if (!replayMode)
-        loadCommonMarketData();
-
     QList<MarketWatcher*> watcherList;
     for (const auto & config : watcherConfigs) {
-        MarketWatcher *pWatcher = new MarketWatcher(config, replayMode);
+        MarketWatcher *pWatcher = new MarketWatcher(config);
         new Market_watcherAdaptor(pWatcher);
         QDBusConnection dbus = QDBusConnection::sessionBus();
         dbus.registerObject(config.dbusObject, pWatcher);
@@ -46,9 +38,7 @@ int main(int argc, char *argv[])
 
     int ret = a.exec();
 
-    for (auto pWatcher : qAsConst(watcherList)) {
-        delete pWatcher;
-    }
+    qDeleteAll(watcherList);
     restoreMessageHandler();
     return ret;
 }
